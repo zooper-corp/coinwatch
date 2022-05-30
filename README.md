@@ -6,6 +6,7 @@ A tool to keep track of your tokens across different protocols, currently suppor
 Please copy config.sample.yml to ./config.yml to start, then edit based on your needs. You can change location of the DB 
 which defaults to $HOME/.coinwatch.db and configuration path using parameters, check ```coinwatch --help``` for a full 
 list of options.
+
 ### Telegram bot
 The tool is meant to be run as a Telegram bot, it will provide a nice visualization of your tokens, start the bot using
 ```bash
@@ -49,4 +50,10 @@ AZERO 20%  312    0.917€ +2.5% -8.8%
 ASTR  5.6% 1.2K   0.061€ +13%  +0%   
 DOT   2.2% 335    9.59€  +4.0% -1.5% 
 KSM   0.4% 8.54   70.3€  +4.7% -11%  
+```
+
+### Docker
+A ready made Docker image is available at Docker hub, just do:
+```bash
+docker pull johnuopini/coinwatch:latest
 ```
