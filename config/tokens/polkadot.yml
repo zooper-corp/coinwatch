@@ -1,0 +1,12 @@
+# Polkadot
+- symbol: dot
+  geckoid: polkadot
+  contract: polkadot
+# Astar
+- symbol: astr
+  geckoid: astar
+  contract: astar
+# Moonbeam
+- symbol: glmr
+  geckoid: moonbeam
+  contract: moonbeam

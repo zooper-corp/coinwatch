@@ -1,0 +1,7 @@
+# Kusama
+- symbol: ksm
+  contract: kusama
+# Moonriver
+- symbol: movr
+  geckoid: moonriver
+  contract: moonriver

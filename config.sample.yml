@@ -1,0 +1,26 @@
+# This is main fiat that will be used for balance, changing this after first update will invalidate the DB
+globals:
+  fiat: EUR
+  fiat_symbol: €
+  # Min FIAT value, anything lower will be ignored
+  fiat_min: 10
+# Main wallet list
+wallets:
+  # Sample substrate based stash
+  - name: substrate
+    # Use subscan as a provider
+    provider:
+      name: subscan
+      key: optionalsubscankeygoeshere
+    # Specify tokens to query in the form token[:address][:label], they need to be supported internally or added in tokens
+    tokens:
+      - dot:15UZ492WjQLfhNNnQwXrvgM2hZvNsHEAVJ6y5pGkZzzfB13J:adotstash
+      - glmr:0x1ac8a6D59dB3938DdbeE19f4EC3eA8a0a771BF6e:moonbeam
+      - astr:bW1jKFvUkmFVo6DKSsPCAq3b43yScP3hKi8qFFLnJkYN1Hi:astar
+      - kma:dmwncxsrjMK2ppYHTWAqr19EHo8NHv9PRQ6r4ZqWSzWoSbQGe:kalarewards
+# We can add custom tokens to providers if some are not supported by default
+tokens:
+  # Add a subscan token
+  - symbol: kma
+    geckoid: kalamari
+    contract: calamari
