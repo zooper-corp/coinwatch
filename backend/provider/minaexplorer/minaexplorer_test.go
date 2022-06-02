@@ -1,21 +1,11 @@
-package subscan
+package minaexplorer
 
 import (
 	"github.com/zooper-corp/CoinWatch/config"
+	"log"
 	"net/http"
 	"testing"
 )
-
-func TestProvider_Ping(t *testing.T) {
-	p := getProvider()
-	r, err := p.Ping("polkadot")
-	if err != nil {
-		t.Error(err)
-	}
-	if r == 0 {
-		t.Error("Expected >0 got 0")
-	}
-}
 
 func TestProvider_GetBalance(t *testing.T) {
 	p := getProvider()
@@ -24,6 +14,7 @@ func TestProvider_GetBalance(t *testing.T) {
 		t.Error(err)
 	}
 	r := b[0]
+	log.Println(r)
 	if r.Balance == 0 {
 		t.Error("Expected >0 got 0")
 	}
@@ -41,16 +32,16 @@ func getWallet() config.Wallet {
 	return config.Wallet{
 		Name: "test",
 		Provider: config.ProviderConfig{
-			Name: "subscan",
+			Name: "minaexplorer",
 		},
 		Filters: []config.TokenFilter{
 			{
-				Symbol:  "dot",
-				Address: "1vTfju3zruADh7sbBznxWCpircNp9ErzJaPQZKyrUknApRu",
+				Symbol:  "mina",
+				Address: "B62qq3TQ8AP7MFYPVtMx5tZGF3kWLJukfwG1A1RGvaBW1jfTPTkDBW6",
 				Config: config.TokenConfig{
-					Symbol:   "dot",
-					GeckoId:  "polkadot",
-					Contract: "polkadot",
+					Symbol:   "mina",
+					GeckoId:  "mina-protocol",
+					Contract: "mina",
 				},
 			},
 		},

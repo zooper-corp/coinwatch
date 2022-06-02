@@ -1,21 +1,10 @@
-package subscan
+package blockcypher
 
 import (
 	"github.com/zooper-corp/CoinWatch/config"
 	"net/http"
 	"testing"
 )
-
-func TestProvider_Ping(t *testing.T) {
-	p := getProvider()
-	r, err := p.Ping("polkadot")
-	if err != nil {
-		t.Error(err)
-	}
-	if r == 0 {
-		t.Error("Expected >0 got 0")
-	}
-}
 
 func TestProvider_GetBalance(t *testing.T) {
 	p := getProvider()
@@ -24,7 +13,7 @@ func TestProvider_GetBalance(t *testing.T) {
 		t.Error(err)
 	}
 	r := b[0]
-	if r.Balance == 0 {
+	if r.Balance == 0 && r.Balance < 1 {
 		t.Error("Expected >0 got 0")
 	}
 }
@@ -41,16 +30,16 @@ func getWallet() config.Wallet {
 	return config.Wallet{
 		Name: "test",
 		Provider: config.ProviderConfig{
-			Name: "subscan",
+			Name: "blockcypher",
 		},
 		Filters: []config.TokenFilter{
 			{
-				Symbol:  "dot",
-				Address: "1vTfju3zruADh7sbBznxWCpircNp9ErzJaPQZKyrUknApRu",
+				Symbol:  "btc",
+				Address: "1DEP8i3QJCsomS4BSMY2RpU1upv62aGvhD",
 				Config: config.TokenConfig{
-					Symbol:   "dot",
-					GeckoId:  "polkadot",
-					Contract: "polkadot",
+					Symbol:   "btc",
+					GeckoId:  "bitcoin",
+					Contract: "bitcoin",
 				},
 			},
 		},

@@ -1,21 +1,10 @@
-package subscan
+package algoexplorer
 
 import (
 	"github.com/zooper-corp/CoinWatch/config"
 	"net/http"
 	"testing"
 )
-
-func TestProvider_Ping(t *testing.T) {
-	p := getProvider()
-	r, err := p.Ping("polkadot")
-	if err != nil {
-		t.Error(err)
-	}
-	if r == 0 {
-		t.Error("Expected >0 got 0")
-	}
-}
 
 func TestProvider_GetBalance(t *testing.T) {
 	p := getProvider()
@@ -41,16 +30,16 @@ func getWallet() config.Wallet {
 	return config.Wallet{
 		Name: "test",
 		Provider: config.ProviderConfig{
-			Name: "subscan",
+			Name: "algoexplorer",
 		},
 		Filters: []config.TokenFilter{
 			{
-				Symbol:  "dot",
-				Address: "1vTfju3zruADh7sbBznxWCpircNp9ErzJaPQZKyrUknApRu",
+				Symbol:  "algo",
+				Address: "UD33QBPIM4ZO4B2WK5Y5DYT5J5LYY5FA3IF3G4AVYSCWLCSMS5NYDRW6GE",
 				Config: config.TokenConfig{
-					Symbol:   "dot",
-					GeckoId:  "polkadot",
-					Contract: "polkadot",
+					Symbol:   "algo",
+					GeckoId:  "algorand",
+					Contract: "algorand",
 				},
 			},
 		},
