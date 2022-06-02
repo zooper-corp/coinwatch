@@ -1,11 +1,15 @@
 # CoinWatch
-A tool to keep track of your tokens across different protocols, currently supports:
-- All substrate coins via SubScan
-- Kraken exchange
-
-Please copy config.sample.yml to ./config.yml to start, then edit based on your needs. You can change location of the DB 
+A tool to keep track of your tokens across different protocols. Please copy config.sample.yml to ./config.yml to start, then edit based on your needs. You can change location of the DB 
 which defaults to $HOME/.coinwatch.db and configuration path using parameters, check ```coinwatch --help``` for a full 
-list of options.
+list of options. 
+
+Inside the configuration every wallet gets data from a balance provider, currently the app supports the following
+options:
+- `subscan` provides data on most substrate based tokens
+- `kraken` supports balance from Kraken exchange (any token)
+- `algoexplorer` currently support balance for algo token only
+- `minaexplorer` mina token balance
+- `blockcypher` bitcoin balance
 
 ### Telegram bot
 The tool is meant to be run as a Telegram bot, it will provide a nice visualization of your tokens, start the bot using
