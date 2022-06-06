@@ -86,7 +86,7 @@ func (p Provider) GetBalances() ([]data.TokenBalance, error) {
 				log.Printf("Unknown modifier %v", parts[1])
 			}
 		}
-		log.Printf("Krakeb balance: %v:%v => %v", name, addr, qt)
+		log.Printf("Kraken balance: %v:%v => %v", name, addr, qt)
 		r = append(r, data.TokenBalance{
 			Wallet:  p.wallet.Name,
 			Symbol:  name,

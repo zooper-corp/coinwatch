@@ -185,5 +185,10 @@ func (c *Client) updateWallet(wallet *config.Wallet) ([]data.TokenBalance, error
 		return nil, err
 	}
 	// Update data, get balance and current fiat value
-	return bp.GetBalances()
+	log.Printf("Updating wallet %v from %s\n", wallet.Name, wallet.Provider.Name)
+	tb, err := bp.GetBalances()
+	if err != nil {
+		log.Printf("Error wallet %v from %s: %s\n", wallet.Name, wallet.Provider.Name, err.Error())
+	}
+	return tb, err
 }

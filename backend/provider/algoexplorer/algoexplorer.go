@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	apiEndpoint = "https://api.algoexplorer.io/v2/%v"
+	apiEndpoint = "https://algoindexer.algoexplorerapi.io/v2/%v"
 	apiAccount  = "accounts/"
 )
 
@@ -44,6 +44,7 @@ func (p Provider) GetBalances() ([]data.TokenBalance, error) {
 
 func (p Provider) GetBalance(address string, symbol string) (data.TokenBalance, error) {
 	r, err := p.call(apiAccount + address)
+	print(string(r))
 	if err != nil {
 		return data.TokenBalance{}, err
 	}
@@ -55,8 +56,8 @@ func (p Provider) GetBalance(address string, symbol string) (data.TokenBalance, 
 	return data.TokenBalance{
 		Wallet:  p.wallet.Name,
 		Symbol:  symbol,
-		Address: account.Address,
-		Balance: float64(account.Amount) / 1000000.0,
+		Address: account.Account.Address,
+		Balance: float64(account.Account.Amount) / 1000000.0,
 		Locked:  0,
 	}, nil
 }
