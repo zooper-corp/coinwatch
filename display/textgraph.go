@@ -29,8 +29,9 @@ func TotalAsciiGraph(c *client.Client, days int, cfg AsciiGraphStyle) (string, e
 	series := bs.GetTimeSeries(cfg.Width, time.Hour*time.Duration(days)/time.Duration(cfg.Width))
 	d := make([]float64, 0)
 	for _, entry := range series {
-		d = append(d, tools.NormalizeFloat64(entry.TotalFiatValue()))
+		d = append(d, entry.TotalFiatValue())
 	}
+	d = tools.NormalizeFloat64Series(d)
 	tools.ReverseFloat64Array(d)
 	return asciigraph.Plot(
 		d,

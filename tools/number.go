@@ -59,18 +59,29 @@ func HumanFloat64(v float64) string {
 	}
 }
 
-func NormalizeFloat64(v float64) float64 {
-	switch {
-	case v > math.Pow10(5):
-		r, err := strconv.ParseFloat(fmt.Sprintf("%.1f", v/1000), 64)
-		if err == nil {
-			return r
-		} else {
-			return 0.0
-		}
-	case v > math.Pow10(2):
-		return float64(int64(v))
-	default:
-		return v
+func NormalizeFloat64Series(series []float64) []float64 {
+	r := make([]float64, len(series))
+	if len(series) == 0 {
+		return r
 	}
+	max := math.Abs(series[0])
+	for _, v := range series {
+		max = math.Max(max, math.Abs(v))
+	}
+	for i, v := range series {
+		switch {
+		case max > math.Pow10(5):
+			rf, err := strconv.ParseFloat(fmt.Sprintf("%.1f", v/1000), 64)
+			if err == nil {
+				r[i] = rf
+			} else {
+				r[i] = 0.0
+			}
+		case max > math.Pow10(2):
+			r[i] = float64(int64(v))
+		default:
+			r[i] = v
+		}
+	}
+	return r
 }
