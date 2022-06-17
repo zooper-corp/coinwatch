@@ -44,7 +44,6 @@ func (p Provider) GetBalances() ([]data.TokenBalance, error) {
 
 func (p Provider) GetBalance(address string, symbol string) (data.TokenBalance, error) {
 	r, err := p.call(apiAccount + address)
-	print(string(r))
 	if err != nil {
 		return data.TokenBalance{}, err
 	}

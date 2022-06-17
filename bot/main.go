@@ -6,6 +6,7 @@ import (
 	"github.com/zooper-corp/CoinWatch/client"
 	"github.com/zooper-corp/CoinWatch/config"
 	"github.com/zooper-corp/CoinWatch/display"
+	"github.com/zooper-corp/CoinWatch/tools"
 	"log"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ var mainKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButton("/summary 7"),
 		tgbotapi.NewKeyboardButton("/summary 31"),
 		tgbotapi.NewKeyboardButton("/allocation"),
+		tgbotapi.NewKeyboardButton("/wallets"),
 	),
 )
 
@@ -116,6 +118,35 @@ func (b *TelegramBot) onUpdate(update tgbotapi.Update) {
 		b.sendHtmlMessage(fmt.Sprintf(
 			"<b>Update</b>\n%s\n<b>Allocation</b>\n<pre>%s</pre>",
 			u.Format(time.RFC822), t,
+		))
+	case "/wallets":
+		balances := b.client.GetLastBalance()
+		t := ""
+		for _, wallet := range balances.Wallets() {
+			t = t + fmt.Sprintf("<b>%s</b>\n", strings.ToUpper(wallet))
+			for _, token := range balances.Tokens() {
+				valid := false
+				thead := fmt.Sprintf(" - <b>%s</b>\n", strings.ToUpper(token))
+				for _, ba := range balances.Entries() {
+					if ba.Token == token && ba.Wallet == wallet && ba.Balance != 0 {
+						if !valid {
+							valid = true
+							t = t + thead
+						}
+						t = t + fmt.Sprintf(
+							"   - %s [%s%s] <pre>%s</pre>\n",
+							tools.HumanFloat64(ba.Balance),
+							tools.HumanFloat64(ba.FiatValue),
+							b.client.GetFiatSymbol(),
+							ba.Address,
+						)
+					}
+				}
+			}
+		}
+		b.sendHtmlMessage(fmt.Sprintf(
+			"<b>Wallets</b>\n%s\n%s",
+			b.client.GetLastBalanceUpdate().Format(time.RFC822), t,
 		))
 	}
 }

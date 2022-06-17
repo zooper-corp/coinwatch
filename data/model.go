@@ -164,6 +164,34 @@ func (b Balances) FilterToken(token string) Balances {
 	return Balances{entries: r}
 }
 
+// Tokens will return all tokens in this series
+func (b Balances) Tokens() []string {
+	if len(b.entries) == 0 {
+		return nil
+	}
+	r := set.NewStringSet()
+	for _, bs := range b.entries {
+		if !r.Has(bs.Token) {
+			r.Add(bs.Token)
+		}
+	}
+	return r.List()
+}
+
+// Wallets will return all tokens in this series
+func (b Balances) Wallets() []string {
+	if len(b.entries) == 0 {
+		return nil
+	}
+	r := set.NewStringSet()
+	for _, bs := range b.entries {
+		if !r.Has(bs.Wallet) {
+			r.Add(bs.Wallet)
+		}
+	}
+	return r.List()
+}
+
 // ClosestSampleTuple return 2 samples between start and end
 func (b Balances) ClosestSampleTuple(start time.Duration, end time.Duration) Balances {
 	r := make([]Balance, 0)

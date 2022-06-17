@@ -2,7 +2,6 @@ package minaexplorer
 
 import (
 	"github.com/zooper-corp/CoinWatch/config"
-	"log"
 	"net/http"
 	"testing"
 )
@@ -14,7 +13,6 @@ func TestProvider_GetBalance(t *testing.T) {
 		t.Error(err)
 	}
 	r := b[0]
-	log.Println(r)
 	if r.Balance == 0 {
 		t.Error("Expected >0 got 0")
 	}

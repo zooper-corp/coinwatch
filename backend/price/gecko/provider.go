@@ -42,11 +42,14 @@ func (cg Provider) GetPrices(tokens []string, fiat string) (data.TokenPrices, er
 	log.Printf("CoinGecko prices for tokens %v -> r: %v", coins.GetTokens(), sp)
 	prices := make([]data.TokenPrice, 0)
 	for _, coin := range coins.Coins {
-		prices = append(prices, data.TokenPrice{
-			Token: coin.Symbol,
-			Price: (*sp)[coin.CoinId][strings.ToLower(fiat)],
-			Fiat:  strings.ToLower(fiat),
-		})
+		price := (*sp)[coin.CoinId][strings.ToLower(fiat)]
+		if price != 0 {
+			prices = append(prices, data.TokenPrice{
+				Token: coin.Symbol,
+				Price: price,
+				Fiat:  strings.ToLower(fiat),
+			})
+		}
 	}
 	return data.TokenPrices{Entries: prices}, nil
 }
