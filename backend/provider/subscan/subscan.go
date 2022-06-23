@@ -10,13 +10,14 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
 const (
 	apiEndpoint  = "https://%v.api.subscan.io/api/%v"
 	apiTimestamp = "now"
-	apiSearch    = "v2/scan/search"
+	apiTokens    = "scan/account/tokens"
 )
 
 type Provider struct {
@@ -47,24 +48,34 @@ func (p Provider) GetBalances() ([]data.TokenBalance, error) {
 }
 
 func (p Provider) GetBalance(endpoint string, address string, symbol string) (data.TokenBalance, error) {
-	r, err := p.call(apiSearch, endpoint, map[string]string{
-		"key": address,
+	r, err := p.call(apiTokens, endpoint, map[string]string{
+		"address": address,
 	})
 	if err != nil {
 		return data.TokenBalance{}, err
 	}
-	var es endpointSearch
+	var es endpointTokens
 	if err := json.Unmarshal(r, &es); err != nil {
 		return data.TokenBalance{}, err
 	}
-	log.Printf("Got balance for wallet '%v:%v' => %v", symbol, address, es.Data.Account.Balance)
-	return data.TokenBalance{
-		Wallet:  p.wallet.Name,
-		Symbol:  symbol,
-		Address: address,
-		Balance: tools.FmtTokenAmount(es.Data.Account.Balance),
-		Locked:  tools.FmtTokenAmount(es.Data.Account.BalanceLock),
-	}, nil
+	for _, tokenType := range es.Data {
+		for _, tb := range tokenType {
+			if strings.EqualFold(tb.Symbol, symbol) {
+				decimals := tb.Decimals
+				balance, _ := tools.ToDecimal(tb.Balance, decimals).Float64()
+				locked, _ := tools.ToDecimal(tb.Lock, decimals).Float64()
+				log.Printf("Got balance for wallet '%v:%v' => %v/%v", symbol, address, balance, locked)
+				return data.TokenBalance{
+					Wallet:  p.wallet.Name,
+					Symbol:  symbol,
+					Address: address,
+					Balance: balance,
+					Locked:  locked,
+				}, nil
+			}
+		}
+	}
+	return data.TokenBalance{}, fmt.Errorf("symbol not found %v in wallet %v", symbol, p.wallet)
 }
 
 func (p Provider) Ping(endpoint string) (int, error) {

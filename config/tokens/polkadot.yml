@@ -10,3 +10,7 @@
 - symbol: glmr
   geckoid: moonbeam
   contract: moonbeam
+# Well (sample ERC20 token over MoonBeam network)
+- symbol: well
+  geckoid: moonwell-artemis
+  contract: moonbeam

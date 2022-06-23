@@ -7,13 +7,16 @@ type endpointTimestamp struct {
 	Data        int    `json:"data"`
 }
 
-type endpointSearch struct {
-	Code        int `json:"code"`
-	GeneratedAt int `json:"generated_at"`
-	Data        struct {
-		Account struct {
-			Balance     string `json:"balance"`
-			BalanceLock string `json:"balance_lock"`
-		} `json:"account"`
-	} `json:"data"`
+type endpointTokenData struct {
+	Symbol   string `json:"symbol"`
+	Decimals int    `json:"decimals"`
+	Balance  string `json:"balance"`
+	Lock     string `json:"lock"`
+}
+
+type endpointTokens struct {
+	Code        int                            `json:"code"`
+	Message     string                         `json:"message"`
+	GeneratedAt int                            `json:"generated_at"`
+	Data        map[string][]endpointTokenData `json:"data"`
 }

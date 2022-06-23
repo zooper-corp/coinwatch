@@ -7,7 +7,7 @@ import (
 )
 
 func TestProvider_Ping(t *testing.T) {
-	p := getProvider()
+	p := getProvider(getPolkadotWallet())
 	r, err := p.Ping("polkadot")
 	if err != nil {
 		t.Error(err)
@@ -18,7 +18,7 @@ func TestProvider_Ping(t *testing.T) {
 }
 
 func TestProvider_GetBalance(t *testing.T) {
-	p := getProvider()
+	p := getProvider(getPolkadotWallet())
 	b, err := p.GetBalances()
 	if err != nil {
 		t.Error(err)
@@ -29,15 +29,26 @@ func TestProvider_GetBalance(t *testing.T) {
 	}
 }
 
-func getProvider() Provider {
-	wallet := getWallet()
+func TestProvider_Erc20_GetBalance(t *testing.T) {
+	p := getProvider(getErc20MoonBeamWallet())
+	b, err := p.GetBalances()
+	if err != nil {
+		t.Error(err)
+	}
+	r := b[0]
+	if r.Balance == 0 {
+		t.Error("Expected >0 got 0")
+	}
+}
+
+func getProvider(wallet config.Wallet) Provider {
 	return Provider{
 		wallet:     &wallet,
 		httpClient: http.DefaultClient,
 	}
 }
 
-func getWallet() config.Wallet {
+func getPolkadotWallet() config.Wallet {
 	return config.Wallet{
 		Name: "test",
 		Provider: config.ProviderConfig{
@@ -51,6 +62,26 @@ func getWallet() config.Wallet {
 					Symbol:   "dot",
 					GeckoId:  "polkadot",
 					Contract: "polkadot",
+				},
+			},
+		},
+	}
+}
+
+func getErc20MoonBeamWallet() config.Wallet {
+	return config.Wallet{
+		Name: "test",
+		Provider: config.ProviderConfig{
+			Name: "subscan",
+		},
+		Filters: []config.TokenFilter{
+			{
+				Symbol:  "well",
+				Address: "0x519ee031E182D3E941549E7909C9319cFf4be69a",
+				Config: config.TokenConfig{
+					Symbol:   "well",
+					GeckoId:  "moonwell",
+					Contract: "moonbeam",
 				},
 			},
 		},
