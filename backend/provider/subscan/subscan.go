@@ -75,7 +75,14 @@ func (p Provider) GetBalance(endpoint string, address string, symbol string) (da
 			}
 		}
 	}
-	return data.TokenBalance{}, fmt.Errorf("symbol not found %v in wallet %v", symbol, p.wallet)
+	// Empty
+	return data.TokenBalance{
+		Wallet:  p.wallet.Name,
+		Symbol:  symbol,
+		Address: address,
+		Balance: 0,
+		Locked:  0,
+	}, nil
 }
 
 func (p Provider) Ping(endpoint string) (int, error) {
