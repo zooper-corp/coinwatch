@@ -16,7 +16,7 @@ The tool is meant to be run as a Telegram bot, it will provide a nice visualizat
 ```bash
 coinwatch -v bot --chat-id YOURCHATID --token YOURTELEGRAMTOKEN 
 ```
-Right now supported commands are /summary <days> and /allocation
+Right now supported commands are /sum <days> and /allocation
 
 Summary will output something like
 ```

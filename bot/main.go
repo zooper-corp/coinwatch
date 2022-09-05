@@ -22,8 +22,8 @@ type TelegramBot struct {
 
 var mainKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("/summary 7"),
-		tgbotapi.NewKeyboardButton("/summary 31"),
+		tgbotapi.NewKeyboardButton("/sum 7"),
+		tgbotapi.NewKeyboardButton("/sum 31"),
 		tgbotapi.NewKeyboardButton("/allocation"),
 		tgbotapi.NewKeyboardButton("/wallets"),
 	),
@@ -93,7 +93,7 @@ func (b *TelegramBot) onUpdate(update tgbotapi.Update) {
 		return
 	}
 	switch cmd[0] {
-	case "/summary":
+	case "/sum":
 		days := getIntFromCmd(cmd, 1, 7)
 		u := b.client.GetLastBalanceUpdate()
 		// Table
