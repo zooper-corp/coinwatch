@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"bytes"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/zooper-corp/CoinWatch/client"
@@ -26,6 +27,11 @@ var mainKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButton("/sum 31"),
 		tgbotapi.NewKeyboardButton("/allocation"),
 		tgbotapi.NewKeyboardButton("/wallets"),
+	),
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("/graph 7"),
+		tgbotapi.NewKeyboardButton("/graph 30"),
+		tgbotapi.NewKeyboardButton("/graph 90"),
 	),
 )
 
@@ -111,6 +117,11 @@ func (b *TelegramBot) onUpdate(update tgbotapi.Update) {
 			strings.Join(l[0:len(l)-1], "\n"),
 			l[len(l)-1:][0], g,
 		))
+	case "/graph":
+		days := getIntFromCmd(cmd, 1, 7)
+		// Graph
+		g, _ := display.TotalBmpGraph(b.client, days, display.BmpGraphStyle{Width: 1280, Height: 480})
+		b.sendImageBuffer(g)
 	case "/allocation":
 		days := getIntFromCmd(cmd, 1, 7)
 		u := b.client.GetLastBalanceUpdate()
@@ -157,6 +168,15 @@ func (b *TelegramBot) sendTextMessage(text any) {
 
 func (b *TelegramBot) sendHtmlMessage(text any) {
 	b.sendMessage(text, tgbotapi.ModeHTML)
+}
+
+func (b *TelegramBot) sendImageBuffer(buffer *bytes.Buffer) {
+	image := tgbotapi.FileBytes{Name: "chart.png", Bytes: buffer.Bytes()}
+	_, err := b.bot.Send(tgbotapi.NewPhoto(b.config.ChatId, image))
+	if err != nil {
+		log.Printf("Unable to send message: %v", err)
+		b.sendMessage(fmt.Sprintf("%v", err), "")
+	}
 }
 
 func (b *TelegramBot) sendMessage(text any, mode string) {
