@@ -171,8 +171,8 @@ func (b Balances) Tokens() []string {
 	}
 	r := set.NewStringSet()
 	for _, bs := range b.entries {
-		if !r.Has(bs.Token) {
-			r.Add(bs.Token)
+		if !r.Has(strings.ToUpper(bs.Token)) {
+			r.Add(strings.ToUpper(bs.Token))
 		}
 	}
 	return r.List()

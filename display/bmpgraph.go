@@ -28,7 +28,7 @@ func GetDefaultBmpGraphStyle() BmpGraphStyle {
 }
 
 func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer, error) {
-	maxitems := mathutil.Max(1, cfg.MaxEntries)
+	maxEntries := mathutil.Max(1, cfg.MaxEntries)
 	bs, err := c.QueryBalance(data.BalanceQueryOptions{Days: days})
 	if err != nil {
 		return nil, fmt.Errorf("Unable to query balances %v\n", err)
@@ -36,18 +36,17 @@ func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer
 	entries := bs.GetTimeSeries(days, time.Hour*24)
 	// Get tokens and sort them by total value
 	unsortedTokens := bs.Tokens()
-	tokens := make([]string, len(unsortedTokens))
-	last := make([]float64, len(unsortedTokens))
+	lastSampleTotals := make([]float64, len(unsortedTokens))
 	for i, t := range unsortedTokens {
-		last[i] = entries[0].FilterToken(t).TotalFiatValue()
+		lastSampleTotals[i] = entries[0].FilterToken(t).TotalFiatValue()
 	}
-	order := tools.SortAndReturnIndex(last)
+	order := tools.ReverseIntArray(tools.SortAndReturnIndex(lastSampleTotals))
+	tokens := make([]string, len(unsortedTokens))
 	for i, idx := range order {
 		tokens[i] = unsortedTokens[idx]
 	}
-	tokens = tools.ReverseStringArray(tokens)
 	// Create a series for every token axing at max items
-	series := make([]chart.TimeSeries, mathutil.Min(maxitems, len(tokens)))
+	series := make([]chart.TimeSeries, mathutil.Min(maxEntries, len(tokens)))
 	for i := range series {
 		name := strings.ToUpper(tokens[i])
 		if i == len(series)-1 {

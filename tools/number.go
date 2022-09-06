@@ -15,6 +15,13 @@ func ReverseStringArray(input []string) []string {
 	return append(ReverseStringArray(input[1:]), input[0])
 }
 
+func ReverseIntArray(input []int) []int {
+	if len(input) == 0 {
+		return input
+	}
+	return append(ReverseIntArray(input[1:]), input[0])
+}
+
 func ReverseFloat64Array(a []float64) {
 	for i, j := 0, len(a)-1; i < j; i, j = i+1, j-1 {
 		a[i], a[j] = a[j], a[i]
