@@ -120,7 +120,7 @@ func (b *TelegramBot) onUpdate(update tgbotapi.Update) {
 	case "/graph":
 		days := getIntFromCmd(cmd, 1, 7)
 		// Graph
-		g, _ := display.TotalBmpGraph(b.client, days, display.BmpGraphStyle{Width: 1280, Height: 480})
+		g, _ := display.TotalBmpGraph(b.client, days, display.BmpGraphStyle{Width: 1280, Height: 480, MaxEntries: 6})
 		b.sendImageBuffer(g)
 	case "/allocation":
 		days := getIntFromCmd(cmd, 1, 7)

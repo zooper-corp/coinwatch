@@ -13,6 +13,7 @@ require (
 	github.com/upper/db/v4 v4.5.2
 	github.com/wcharczuk/go-chart v2.0.1+incompatible
 	gopkg.in/yaml.v2 v2.4.0
+	modernc.org/mathutil v1.4.1
 )
 
 require (
@@ -21,6 +22,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mattn/go-sqlite3 v1.14.9 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/image v0.0.0-20220902085622-e7cb96979f69 // indirect

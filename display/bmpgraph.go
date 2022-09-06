@@ -8,23 +8,27 @@ import (
 	"github.com/zooper-corp/CoinWatch/data"
 	"github.com/zooper-corp/CoinWatch/tools"
 	"math"
+	"modernc.org/mathutil"
 	"strings"
 	"time"
 )
 
 type BmpGraphStyle struct {
-	Width  int
-	Height int
+	Width      int
+	Height     int
+	MaxEntries int
 }
 
 func GetDefaultBmpGraphStyle() BmpGraphStyle {
 	return BmpGraphStyle{
-		Width:  1024,
-		Height: 256,
+		Width:      1024,
+		Height:     256,
+		MaxEntries: 5,
 	}
 }
 
 func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer, error) {
+	maxitems := mathutil.Max(1, cfg.MaxEntries)
 	bs, err := c.QueryBalance(data.BalanceQueryOptions{Days: days})
 	if err != nil {
 		return nil, fmt.Errorf("Unable to query balances %v\n", err)
@@ -41,15 +45,20 @@ func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer
 	for i, idx := range order {
 		tokens[i] = unsortedTokens[idx]
 	}
-	// Create a series for every token
-	series := make([]chart.TimeSeries, 0)
-	for _, t := range tokens {
-		series = append(series, chart.TimeSeries{
-			Name:    strings.ToUpper(t),
+	tokens = tools.ReverseStringArray(tokens)
+	// Create a series for every token axing at max items
+	series := make([]chart.TimeSeries, mathutil.Min(maxitems, len(tokens)))
+	for i := range series {
+		name := strings.ToUpper(tokens[i])
+		if i == len(series)-1 {
+			name = "OTHERS"
+		}
+		series[i] = chart.TimeSeries{
+			Name:    name,
 			Style:   chart.StyleShow(),
 			XValues: make([]time.Time, 0),
 			YValues: make([]float64, 0),
-		})
+		}
 	}
 	// Do axes reverse
 	for i := len(entries) - 1; i >= 0; i-- {
@@ -57,10 +66,10 @@ func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer
 		ts := entry.Entries()[0].Timestamp
 		tv := entry.TotalFiatValue()
 		// For each token we stack the total value at given time
-		for i, t := range tokens {
-			series[i].XValues = append(series[i].XValues, ts)
-			series[i].YValues = append(series[i].YValues, tv)
-			tv -= math.Max(0, entry.FilterToken(t).TotalFiatValue())
+		for si := 0; si < len(series); si++ {
+			series[si].XValues = append(series[si].XValues, ts)
+			series[si].YValues = append(series[si].YValues, tv)
+			tv -= math.Max(0, entry.FilterToken(tokens[si]).TotalFiatValue())
 		}
 	}
 	// Draw
