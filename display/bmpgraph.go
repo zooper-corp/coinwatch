@@ -6,6 +6,8 @@ import (
 	"github.com/wcharczuk/go-chart"
 	"github.com/zooper-corp/CoinWatch/client"
 	"github.com/zooper-corp/CoinWatch/data"
+	"github.com/zooper-corp/CoinWatch/tools"
+	"strings"
 	"time"
 )
 
@@ -26,18 +28,42 @@ func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer
 	if err != nil {
 		return nil, fmt.Errorf("Unable to query balances %v\n", err)
 	}
-	series := bs.GetTimeSeries(days, time.Hour*24)
-	// Create axes
-	xAxis := make([]time.Time, 0)
-	yAxis := make([]float64, 0)
-	for i := len(series) - 1; i >= 0; i-- {
-		entry := series[i]
+	entries := bs.GetTimeSeries(days, time.Hour*24)
+	// Get tokens and sort them by total value
+	unsortedTokens := bs.Tokens()
+	tokens := make([]string, len(unsortedTokens))
+	last := make([]float64, len(unsortedTokens))
+	for i, t := range unsortedTokens {
+		last[i] = entries[0].FilterToken(t).TotalFiatValue()
+	}
+	order := tools.SortAndReturnIndex(last)
+	for i, idx := range order {
+		tokens[i] = unsortedTokens[idx]
+	}
+	// Create a series for every token
+	series := make([]chart.TimeSeries, 0)
+	for _, t := range tokens {
+		series = append(series, chart.TimeSeries{
+			Name:    strings.ToUpper(t),
+			Style:   chart.StyleShow(),
+			XValues: make([]time.Time, 0),
+			YValues: make([]float64, 0),
+		})
+	}
+	// Do axes reverse
+	for i := len(entries) - 1; i >= 0; i-- {
+		entry := entries[i]
 		ts := entry.Entries()[0].Timestamp
-		// Create bar
-		xAxis = append(xAxis, ts)
-		yAxis = append(yAxis, entry.TotalFiatValue())
+		tv := 0.0
+		// For each token we stack the total value at given time
+		for i, t := range tokens {
+			tv += entry.FilterToken(t).TotalFiatValue()
+			series[i].XValues = append(series[i].XValues, ts)
+			series[i].YValues = append(series[i].YValues, tv)
+		}
 	}
 	// Draw
+	gs := make([]chart.Series, len(series))
 	graph := chart.Chart{
 		Title: fmt.Sprintf("Total %d days", days),
 		TitleStyle: chart.Style{
@@ -56,18 +82,23 @@ func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer
 			ValueFormatter: chart.TimeDateValueFormatter,
 		},
 		YAxis: chart.YAxis{
-			Style:          chart.StyleShow(),
-			ValueFormatter: chart.FloatValueFormatter,
-		},
-		Series: []chart.Series{
-			chart.TimeSeries{
-				Name:    "Totals",
-				Style:   chart.StyleShow(),
-				XValues: xAxis,
-				YValues: yAxis,
+			Style: chart.StyleShow(),
+			ValueFormatter: func(v interface{}) string {
+				return chart.FloatValueFormatterWithFormat(v, "%.0f")
 			},
 		},
+		Series: gs,
 	}
+	for i, s := range series {
+		s.Style.FillColor = graph.GetColorPalette().GetSeriesColor(i).WithAlpha(50)
+		gs[i] = s
+	}
+	graph.Series = gs
+	// Legend
+	graph.Elements = []chart.Renderable{
+		chart.Legend(&graph),
+	}
+	// Render
 	buffer := bytes.NewBuffer([]byte{})
 	err = graph.Render(chart.PNG, buffer)
 	return buffer, err

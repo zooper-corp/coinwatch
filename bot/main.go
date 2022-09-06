@@ -29,9 +29,9 @@ var mainKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButton("/wallets"),
 	),
 	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("/graph 7"),
 		tgbotapi.NewKeyboardButton("/graph 30"),
 		tgbotapi.NewKeyboardButton("/graph 90"),
+		tgbotapi.NewKeyboardButton("/graph 365"),
 	),
 )
 
