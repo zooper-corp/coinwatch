@@ -7,6 +7,7 @@ import (
 	"github.com/zooper-corp/CoinWatch/client"
 	"github.com/zooper-corp/CoinWatch/data"
 	"github.com/zooper-corp/CoinWatch/tools"
+	"math"
 	"strings"
 	"time"
 )
@@ -54,12 +55,12 @@ func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer
 	for i := len(entries) - 1; i >= 0; i-- {
 		entry := entries[i]
 		ts := entry.Entries()[0].Timestamp
-		tv := 0.0
+		tv := entry.TotalFiatValue()
 		// For each token we stack the total value at given time
 		for i, t := range tokens {
-			tv += entry.FilterToken(t).TotalFiatValue()
 			series[i].XValues = append(series[i].XValues, ts)
 			series[i].YValues = append(series[i].YValues, tv)
+			tv -= math.Max(0, entry.FilterToken(t).TotalFiatValue())
 		}
 	}
 	// Draw
