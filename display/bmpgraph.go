@@ -27,15 +27,21 @@ func GetDefaultBmpGraphStyle() BmpGraphStyle {
 	}
 }
 
-func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer, error) {
+func TotalBmpGraph(c *client.Client, days int, filterTokens string, cfg BmpGraphStyle) (*bytes.Buffer, error) {
 	maxEntries := mathutil.Max(1, cfg.MaxEntries)
 	bs, err := c.QueryBalance(data.BalanceQueryOptions{Days: days})
 	if err != nil {
 		return nil, fmt.Errorf("Unable to query balances %v\n", err)
 	}
-	entries := bs.GetTimeSeries(days, time.Hour*24)
-	// Get tokens and sort them by total value
+	// Get tokens
 	unsortedTokens := bs.Tokens()
+	// Override tokens if provided
+	if len(filterTokens) > 0 {
+		unsortedTokens = strings.Split(strings.ToUpper(filterTokens), ",")
+		bs = bs.FilterTokens(unsortedTokens)
+	}
+	// Sort tokens by total value
+	entries := bs.GetTimeSeries(days, time.Hour*24)
 	lastSampleTotals := make([]float64, len(unsortedTokens))
 	for i, t := range unsortedTokens {
 		lastSampleTotals[i] = entries[0].FilterToken(t).TotalFiatValue()
@@ -62,13 +68,15 @@ func TotalBmpGraph(c *client.Client, days int, cfg BmpGraphStyle) (*bytes.Buffer
 	// Do axes reverse
 	for i := len(entries) - 1; i >= 0; i-- {
 		entry := entries[i]
-		ts := entry.Entries()[0].Timestamp
-		tv := entry.TotalFiatValue()
-		// For each token we stack the total value at given time
-		for si := 0; si < len(series); si++ {
-			series[si].XValues = append(series[si].XValues, ts)
-			series[si].YValues = append(series[si].YValues, tv)
-			tv -= math.Max(0, entry.FilterToken(tokens[si]).TotalFiatValue())
+		if len(entry.Entries()) > 0 {
+			ts := entry.Entries()[0].Timestamp
+			tv := entry.TotalFiatValue()
+			// For each token we stack the total value at given time
+			for si := 0; si < len(series); si++ {
+				series[si].XValues = append(series[si].XValues, ts)
+				series[si].YValues = append(series[si].YValues, tv)
+				tv -= math.Max(0, entry.FilterToken(tokens[si]).TotalFiatValue())
+			}
 		}
 	}
 	// Draw

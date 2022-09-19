@@ -164,6 +164,20 @@ func (b Balances) FilterToken(token string) Balances {
 	return Balances{entries: r}
 }
 
+// FilterTokens will return entries filtered by tokens
+func (b Balances) FilterTokens(tokens []string) Balances {
+	if len(b.entries) == 0 {
+		return Balances{}
+	}
+	r := make([]Balance, 0)
+	for _, bs := range b.entries {
+		if tools.StringInSlice(strings.ToUpper(bs.Token), tokens) {
+			r = append(r, bs)
+		}
+	}
+	return Balances{entries: r}
+}
+
 // Tokens will return all tokens in this series
 func (b Balances) Tokens() []string {
 	if len(b.entries) == 0 {

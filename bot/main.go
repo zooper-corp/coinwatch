@@ -119,8 +119,14 @@ func (b *TelegramBot) onUpdate(update tgbotapi.Update) {
 		))
 	case "/graph":
 		days := getIntFromCmd(cmd, 1, 7)
+		tokens := getStrFromCmd(cmd, 2, "")
 		// Graph
-		g, _ := display.TotalBmpGraph(b.client, days, display.BmpGraphStyle{Width: 1280, Height: 480, MaxEntries: 6})
+		g, _ := display.TotalBmpGraph(
+			b.client,
+			days,
+			tokens,
+			display.BmpGraphStyle{Width: 1280, Height: 480, MaxEntries: 6},
+		)
 		b.sendImageBuffer(g)
 	case "/allocation":
 		days := getIntFromCmd(cmd, 1, 7)
@@ -198,6 +204,14 @@ func getIntFromCmd(cmd []string, index int, defaultValue int) int {
 		if err == nil {
 			r = i
 		}
+	}
+	return r
+}
+
+func getStrFromCmd(cmd []string, index int, defaultValue string) string {
+	r := defaultValue
+	if len(cmd) > index {
+		return cmd[index]
 	}
 	return r
 }
