@@ -13,7 +13,6 @@ func TestProvider_GetPrices(t *testing.T) {
 		Symbol:   "ksm",
 		GeckoId:  "kusama",
 		Contract: "kusama",
-		Decimals: 12,
 	}}, http.DefaultClient)
 	ps, err := provider.GetPrices([]string{"ksm"}, "usd")
 	if err != nil {
