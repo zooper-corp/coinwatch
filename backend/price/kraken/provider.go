@@ -98,11 +98,6 @@ func (p Provider) GetPrices(tokens []string, fiat string) (data.TokenPrices, err
 			Fiat:  fiat,
 		})
 	}
-	// Did we miss anything?
-	if seen.Size() > 0 {
-		log.Printf("Cannot find price for tokens %v", seen)
-		return data.TokenPrices{}, fmt.Errorf("cannot find price for tokens %v", seen)
-	}
 	// Check if some token was not found
 	return data.TokenPrices{Entries: r}, nil
 }
