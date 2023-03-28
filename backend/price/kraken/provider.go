@@ -46,8 +46,8 @@ func (p Provider) GetPrices(tokens []string, fiat string) (data.TokenPrices, err
 		seen.Add(strings.ToUpper(token))
 		pairs = append(pairs, fmt.Sprintf("%s%s", strings.ToUpper(token), strings.ToUpper(fiat)))
 	}
-	log.Printf("Kraken query prices for: %v", seen)
 	pairParam := strings.Join(pairs, ",")
+	log.Printf("Kraken query prices for: %v", pairParam)
 	// Query
 	d, err := p.call(apiTicker, fmt.Sprintf("pair=%s", pairParam), nil)
 	if err != nil {

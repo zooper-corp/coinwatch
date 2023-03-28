@@ -88,7 +88,8 @@ func (b *TelegramBot) updateBalance() {
 	log.Printf("Running ticker update")
 	err := b.client.UpdateBalance(15)
 	if err != nil {
-		b.sendTextMessage(fmt.Sprintf("Balance update failed %v", err))
+		log.Printf(fmt.Sprintf("Balance update failed %v", err))
+		//b.sendTextMessage(fmt.Sprintf("Balance update failed %v", err))
 	}
 }
 
