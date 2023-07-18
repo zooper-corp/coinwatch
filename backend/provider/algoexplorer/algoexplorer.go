@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	apiEndpoint = "https://algoindexer.algoexplorerapi.io/v2/%v"
+	apiEndpoint = "https://mainnet-algorand.api.purestake.io/idx2/v2/%v"
 	apiAccount  = "accounts/"
 )
 
@@ -76,6 +76,9 @@ func (p Provider) call(uriPath string) ([]byte, error) {
 			"(KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36",
 	)
 	req.Header.Set("Content-Type", "application/json")
+	// Add key
+	req.Header.Set("X-API-Key", p.wallet.Provider.Key)
+	// Send request
 	r, err, code, _ := tools.ReadHTTPRequest(req, p.httpClient)
 	if err != nil {
 		log.Printf("Algo Explorer HTTP request failed: [%d] %v\n", code, err)
