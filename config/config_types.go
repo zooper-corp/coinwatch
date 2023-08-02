@@ -45,9 +45,10 @@ type TokenFilter struct {
 }
 
 type ProviderConfig struct {
-	Name   string `yaml:"name"`
-	Key    string `yaml:"key"`
-	Secret string `yaml:"secret"`
+	Name   string   `yaml:"name"`
+	Key    string   `yaml:"key"`
+	Secret string   `yaml:"secret"`
+	Ignore []string `yaml:"ignore"`
 }
 
 type TokenConfig struct {

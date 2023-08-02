@@ -56,12 +56,18 @@ func (p Provider) GetBalances() ([]data.TokenBalance, error) {
 		return nil, fmt.Errorf("kraken API call failed: %v", balance.Error[0])
 	}
 	r := make([]data.TokenBalance, 0)
+	ignoredTokens := p.wallet.Provider.Ignore
 	for token, amount := range balance.Result {
 		parts := strings.Split(token, ".")
 		// Symbol clean iup
 		name := strings.Trim(parts[0], "XZ2")
 		if name == "BT" {
 			name = "BTC"
+		}
+		// Check if name lowercase is in ignoredTokens array
+		if tools.StringInSlice(strings.ToLower(name), ignoredTokens) {
+			log.Printf("Ignoring token %v", name)
+			continue
 		}
 		// Get quantity
 		qt, err := strconv.ParseFloat(amount, 32)
