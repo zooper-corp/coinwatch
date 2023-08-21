@@ -57,6 +57,7 @@ func (p Provider) GetBalances() ([]data.TokenBalance, error) {
 	}
 	r := make([]data.TokenBalance, 0)
 	ignoredTokens := p.wallet.Provider.Ignore
+	renameRules := p.wallet.Provider.Rename
 	for token, amount := range balance.Result {
 		parts := strings.Split(token, ".")
 		// Symbol clean iup
@@ -68,6 +69,14 @@ func (p Provider) GetBalances() ([]data.TokenBalance, error) {
 		if tools.StringInSlice(strings.ToLower(name), ignoredTokens) {
 			log.Printf("Ignoring token %v", name)
 			continue
+		}
+		// Rename token if needed
+		for _, renameRule := range renameRules {
+			if newName, exists := renameRule[strings.ToLower(name)]; exists {
+				log.Printf("Renaming token %v to %v", name, newName)
+				name = strings.ToUpper(newName)
+				break // Exit the loop once a rename rule is applied
+			}
 		}
 		// Get quantity
 		qt, err := strconv.ParseFloat(amount, 32)
