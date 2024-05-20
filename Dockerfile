@@ -1,4 +1,4 @@
-FROM golang:1.18.2 AS builder
+FROM golang:1.22.3 AS builder
 
 RUN dpkg --add-architecture amd64 \
     && apt update \

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/zooper-corp/CoinWatch/api"
 	"github.com/zooper-corp/CoinWatch/bot"
 	"github.com/zooper-corp/CoinWatch/client"
 	"github.com/zooper-corp/CoinWatch/config"
@@ -45,7 +46,27 @@ var botCmd = &cobra.Command{
 			ChatId:         botChat,
 			UpdateInterval: time.Minute * time.Duration(updateInterval),
 		})
-		b.Start()
+		// Check for API key
+		apiKey, _ := cmd.Flags().GetString("api-key")
+		if apiKey != "" {
+			apiHost, _ := cmd.Flags().GetString("api-host")
+			apiPort, _ := cmd.Flags().GetInt("api-port")
+			apiCfg := config.ApiServerConfig{
+				Host:   apiHost,
+				Port:   apiPort,
+				ApiKey: apiKey,
+			}
+			apiServer := api.NewApiServer(&c, apiCfg)
+			go func() {
+				apiServer.Start()
+			}()
+		}
+		// Start the bot
+		go func() {
+			b.Start()
+		}()
+		// Block main thread
+		select {}
 	},
 }
 
@@ -54,4 +75,8 @@ func init() {
 	botCmd.Flags().String("token", "", "Telegram API token, overrides BOT_TOKEN env var")
 	botCmd.Flags().Int64("chat-id", 0, "Telegram admin chat, overrides BOT_CHAT env var")
 	botCmd.Flags().IntP("update-interval", "i", 15, "Time in minutes between updates")
+	// Api server (optional)
+	botCmd.Flags().String("api-key", "", "API key, if provided API server will be started")
+	botCmd.Flags().String("api-host", "0.0.0.0", "Host for the API server")
+	botCmd.Flags().Int("api-port", 8080, "Port for the API server")
 }

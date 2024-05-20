@@ -57,3 +57,9 @@ type TokenConfig struct {
 	GeckoId  string `yaml:"geckoid"`
 	Contract string `yaml:"contract"`
 }
+
+type ApiServerConfig struct {
+	Host   string
+	Port   int
+	ApiKey string
+}

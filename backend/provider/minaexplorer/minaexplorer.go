@@ -11,6 +11,10 @@ import (
 	"strconv"
 )
 
+// https://docs.blockberry.one/reference/getaccountbalance-1
+// needs key :(
+// mina explorer is going to be removed ....
+// https://minaprotocol.com/blog/minaexplorer-discontinuing-its-apis
 const (
 	apiEndpoint = "https://api.minaexplorer.com/%v"
 	apiAccount  = "accounts/"

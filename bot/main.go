@@ -84,6 +84,7 @@ func (b *TelegramBot) startClientUpdateLoop() {
 		}
 	}()
 }
+
 func (b *TelegramBot) updateBalance() {
 	log.Printf("Running ticker update")
 	err := b.client.UpdateBalance(15)
