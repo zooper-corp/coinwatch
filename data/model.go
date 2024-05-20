@@ -10,13 +10,13 @@ import (
 )
 
 type Balance struct {
-	Timestamp     time.Time `db:"ts"`
-	Wallet        string    `db:"wallet"`
-	Token         string    `db:"token"`
-	Address       string    `db:"address"`
-	Balance       float64   `db:"balance"`
-	BalanceLocked float64   `db:"balance_locked"`
-	FiatValue     float64   `db:"fiat_value"`
+	Timestamp     time.Time `db:"ts" json:"timestamp"`
+	Wallet        string    `db:"wallet" json:"wallet"`
+	Token         string    `db:"token" json:"token"`
+	Address       string    `db:"address" json:"address"`
+	Balance       float64   `db:"balance" json:"balance"`
+	BalanceLocked float64   `db:"balance_locked" json:"balance_locked"`
+	FiatValue     float64   `db:"fiat_value" json:"fiat_value"`
 }
 
 type TokenBalance struct {
@@ -315,6 +315,16 @@ func (b Balances) TotalFiatValue() float64 {
 		if !seen.Has(key) {
 			seen.Add(key)
 			total += be.FiatValue
+		}
+	}
+	return total
+}
+
+func (b Balances) TokenBalance(token string) float64 {
+	total := 0.0
+	for _, balance := range b.entries {
+		if strings.EqualFold(balance.Token, token) {
+			total += balance.Balance
 		}
 	}
 	return total
