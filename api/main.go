@@ -29,8 +29,8 @@ func NewApiServer(c *client.Client, cfg config.ApiServerConfig) ApiServer {
 }
 
 func (s *ApiServer) Start() {
-	http.HandleFunc("/api/v1/balance", s.authMiddleware(s.handleBalance))
-	http.HandleFunc("/api/v1/history", s.authMiddleware(s.handleHistory))
+	http.HandleFunc("/api/v1/balance", s.corsMiddleware(s.authMiddleware(s.handleBalance)))
+	http.HandleFunc("/api/v1/history", s.corsMiddleware(s.authMiddleware(s.handleHistory)))
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 	log.Printf("Starting API server on %s", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
@@ -44,6 +44,18 @@ func (s *ApiServer) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		apiKey := r.Header.Get("X-Api-Key")
 		if apiKey != s.config.ApiKey {
 			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}
+}
+
+func (s *ApiServer) corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Api-Key")
+		if r.Method == http.MethodOptions {
 			return
 		}
 		next.ServeHTTP(w, r)
