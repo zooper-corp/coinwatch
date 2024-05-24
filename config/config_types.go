@@ -59,7 +59,8 @@ type TokenConfig struct {
 }
 
 type ApiServerConfig struct {
-	Host   string
-	Port   int
-	ApiKey string
+	Host     string
+	Port     int
+	ApiKey   string
+	CacheTTL time.Duration
 }

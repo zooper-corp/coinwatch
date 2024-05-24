@@ -6,6 +6,7 @@ import (
 	"github.com/zooper-corp/CoinWatch/client"
 	"github.com/zooper-corp/CoinWatch/config"
 	"os"
+	"time"
 )
 
 var apiCmd = &cobra.Command{
@@ -28,9 +29,10 @@ var apiCmd = &cobra.Command{
 		host, _ := cmd.Flags().GetString("host")
 		port, _ := cmd.Flags().GetInt("port")
 		server := api.NewApiServer(&c, config.ApiServerConfig{
-			Host:   host,
-			Port:   port,
-			ApiKey: apiKey,
+			Host:     host,
+			Port:     port,
+			ApiKey:   apiKey,
+			CacheTTL: time.Minute * 5,
 		})
 		server.Start()
 	},

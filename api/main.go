@@ -21,6 +21,7 @@ type ApiServer struct {
 
 type ApiResponse struct {
 	Message string      `json:"message"`
+	Updated time.Time   `json:"updated,omitempty"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
@@ -62,19 +63,28 @@ func (s *ApiServer) corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (s *ApiServer) handleBalance(w http.ResponseWriter, r *http.Request) {
-	balance := s.client.GetLastBalance()
-	response := ApiResponse{
-		Message: "Balance retrieved successfully",
-		Data:    balance.Entries(),
-	}
+func (s *ApiServer) writeJSONResponse(w http.ResponseWriter, response ApiResponse) {
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", int(s.config.CacheTTL.Seconds())))
+	w.Header().Set("Content-Type", "application/json")
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+	}
+}
+
+func (s *ApiServer) handleBalance(w http.ResponseWriter, r *http.Request) {
+	balance := s.client.GetLastBalance()
+	response := ApiResponse{
+		Message: "Balance retrieved successfully",
+		Updated: s.client.GetLastBalanceUpdate(),
+		Data:    balance.Entries(),
+	}
+	s.writeJSONResponse(w, response)
 }
 
 func (s *ApiServer) handleHistory(w http.ResponseWriter, r *http.Request) {
@@ -136,13 +146,8 @@ func (s *ApiServer) handleHistory(w http.ResponseWriter, r *http.Request) {
 
 	response := ApiResponse{
 		Message: "History retrieved successfully",
+		Updated: s.client.GetLastBalanceUpdate(),
 		Data:    dataSeries,
 	}
-	jsonResponse, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
+	s.writeJSONResponse(w, response)
 }

@@ -52,9 +52,10 @@ var botCmd = &cobra.Command{
 			apiHost, _ := cmd.Flags().GetString("api-host")
 			apiPort, _ := cmd.Flags().GetInt("api-port")
 			apiCfg := config.ApiServerConfig{
-				Host:   apiHost,
-				Port:   apiPort,
-				ApiKey: apiKey,
+				Host:     apiHost,
+				Port:     apiPort,
+				ApiKey:   apiKey,
+				CacheTTL: time.Minute * time.Duration(updateInterval) / 5,
 			}
 			apiServer := api.NewApiServer(&c, apiCfg)
 			go func() {
