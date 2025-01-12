@@ -32,6 +32,7 @@ func NewApiServer(c *client.Client, cfg config.ApiServerConfig) ApiServer {
 func (s *ApiServer) Start() {
 	http.HandleFunc("/api/v1/balance", s.corsMiddleware(s.authMiddleware(s.handleBalance)))
 	http.HandleFunc("/api/v1/history", s.corsMiddleware(s.authMiddleware(s.handleHistory)))
+	http.HandleFunc("/api/v1/query", s.corsMiddleware(s.authMiddleware(s.handleQuery)))
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 	log.Printf("Starting API server on %s", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
@@ -100,7 +101,6 @@ func (s *ApiServer) handleHistory(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid interval parameter", http.StatusBadRequest)
 		return
 	}
-
 	totalHours := amount * interval
 	totalDays := (totalHours + 23) / 24 // ceil division to ensure full coverage
 	bs, err := s.client.QueryBalance(data.BalanceQueryOptions{Days: totalDays})
@@ -108,7 +108,6 @@ func (s *ApiServer) handleHistory(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Unable to query balances: %v", err), http.StatusInternalServerError)
 		return
 	}
-
 	// Get tokens
 	unsortedTokens := bs.Tokens()
 	entries := bs.GetTimeSeries(amount, time.Duration(interval)*time.Hour)
@@ -121,7 +120,6 @@ func (s *ApiServer) handleHistory(w http.ResponseWriter, r *http.Request) {
 	for i, idx := range order {
 		tokens[i] = unsortedTokens[idx]
 	}
-
 	// Create a series for every token axing at max items
 	dataSeries := make([]map[string]interface{}, 0)
 	currentTime := time.Now()
@@ -143,11 +141,35 @@ func (s *ApiServer) handleHistory(w http.ResponseWriter, r *http.Request) {
 			dataSeries = append(dataSeries, point)
 		}
 	}
-
 	response := ApiResponse{
 		Message: "History retrieved successfully",
 		Updated: s.client.GetLastBalanceUpdate(),
 		Data:    dataSeries,
+	}
+	s.writeJSONResponse(w, response)
+}
+
+func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
+	fromStr := r.URL.Query().Get("from")
+	toStr := r.URL.Query().Get("to")
+	intervalStr := r.URL.Query().Get("interval")
+	mode := r.URL.Query().Get("mode")
+	// Validate the mode
+	if mode != "token" && mode != "fiat_value" {
+		http.Error(w, "Invalid 'mode' parameter. Allowed values: 'token', 'fiat_value'", http.StatusBadRequest)
+		return
+	}
+	from, _ := time.Parse(time.RFC3339, fromStr)
+	to, _ := time.Parse(time.RFC3339, toStr)
+	interval, _ := time.ParseDuration(intervalStr + "h")
+	balances, err := s.client.GetBalancesInRange(from, to, interval, mode)
+	if err != nil {
+		http.Error(w, "Failed to fetch balances", http.StatusInternalServerError)
+		return
+	}
+	response := ApiResponse{
+		Message: "Structured balances retrieved successfully",
+		Data:    balances,
 	}
 	s.writeJSONResponse(w, response)
 }
