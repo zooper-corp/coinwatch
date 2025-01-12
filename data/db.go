@@ -129,7 +129,7 @@ func (d *Db) GetBalances(options BalanceQueryOptions) (Balances, error) {
 	}, nil
 }
 
-func (d *Db) GetBalancesInRange(from, to time.Time) (Balances, error) {
+func (d *Db) GetBalancesFromDate(from time.Time) (Balances, error) {
 	sess, err := d.GetSession()
 	if err != nil {
 		return Balances{}, err
@@ -145,11 +145,10 @@ func (d *Db) GetBalancesInRange(from, to time.Time) (Balances, error) {
 	}
 	// Prepare the query
 	fromStr := from.Format(time.RFC3339)
-	toStr := to.Format(time.RFC3339)
 	var result []Balance
 	q := sess.SQL().
 		SelectFrom(balanceCollection).
-		Where(fmt.Sprintf("ts BETWEEN '%s' AND '%s'", fromStr, toStr)).
+		Where(fmt.Sprintf("ts BETWEEN '%s' AND datetime('now', 'localtime')", fromStr)).
 		OrderBy("ts ASC")
 	log.Printf("SQL: %s", q.String())
 	if err := q.All(&result); err != nil {

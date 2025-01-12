@@ -65,8 +65,8 @@ func (c Client) QueryBalance(options data.BalanceQueryOptions) (data.Balances, e
 }
 
 // Get balance within range
-func (c Client) GetBalancesInRange(from, to time.Time) (data.Balances, error) {
-	return c.db.GetBalancesInRange(from, to)
+func (c Client) GetBalancesFromDate(from time.Time) (data.Balances, error) {
+	return c.db.GetBalancesFromDate(from)
 }
 
 // UpdateBalance will update the balance for each wallet if rs exceeds updateTtlSeconds

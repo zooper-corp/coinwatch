@@ -151,7 +151,6 @@ func (s *ApiServer) handleHistory(w http.ResponseWriter, r *http.Request) {
 
 func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 	fromStr := r.URL.Query().Get("from")
-	toStr := r.URL.Query().Get("to")
 	intervalStr := r.URL.Query().Get("interval")
 	mode := r.URL.Query().Get("mode")
 	// Validate parameters
@@ -164,11 +163,6 @@ func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid 'from' parameter", http.StatusBadRequest)
 		return
 	}
-	to, err := time.Parse(time.RFC3339, toStr)
-	if err != nil {
-		http.Error(w, "Invalid 'to' parameter", http.StatusBadRequest)
-		return
-	}
 	intervalHours, err := strconv.Atoi(intervalStr)
 	if err != nil || intervalHours <= 0 {
 		http.Error(w, "Invalid 'interval' parameter", http.StatusBadRequest)
@@ -176,12 +170,13 @@ func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 	}
 	interval := time.Duration(intervalHours) * time.Hour
 	// Fetch raw balances for [from, to]
-	rawBalances, err := s.client.GetBalancesInRange(from, to)
+	rawBalances, err := s.client.GetBalancesFromDate(from)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to fetch balances: %v", err), http.StatusInternalServerError)
 		return
 	}
 	// Build a time-series via GetTimeSeries.
+	to := time.Now()
 	totalDuration := to.Sub(from)
 	if totalDuration < 0 {
 		http.Error(w, "'from' must be before 'to'", http.StatusBadRequest)
@@ -204,22 +199,22 @@ func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 		tokens[i] = unsortedTokens[idx]
 	}
 	// Prepare the final result
-	result := make([]map[string]interface{}, 0, len(entries))
+	result := make([]map[string]interface{}, 0)
+	currentTime := time.Now()
 	for i := 0; i < len(entries); i++ {
 		entry := entries[i]
 		if len(entry.Entries()) > 0 {
-			snapshotTime := from.Add(time.Duration(i) * interval)
-			snapshotMap := make(map[string]interface{})
-			snapshotMap["timestamp"] = snapshotTime
+			point := make(map[string]interface{})
+			point["timestamp"] = currentTime.Add(time.Duration(-i*intervalHours) * time.Hour)
 			for _, token := range tokens {
 				tokenData := entry.FilterToken(token)
 				if mode == "fiat_value" {
-					snapshotMap[token] = tokenData.TotalFiatValue()
+					point[token] = tokenData.TotalFiatValue()
 				} else {
-					snapshotMap[token] = tokenData.TokenBalance(token)
+					point[token] = tokenData.TokenBalance(token)
 				}
 			}
-			result = append(result, snapshotMap)
+			result = append(result, point)
 		}
 	}
 	response := ApiResponse{
