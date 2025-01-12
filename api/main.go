@@ -191,23 +191,36 @@ func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 	if steps < 1 {
 		steps = 1
 	}
-	timeSeries := rawBalances.GetTimeSeries(steps, interval)
+	entries := rawBalances.GetTimeSeries(steps, interval)
+	// Get tokens
+	unsortedTokens := rawBalances.Tokens()
+	lastSampleTotals := make([]float64, len(unsortedTokens))
+	for i, t := range unsortedTokens {
+		lastSampleTotals[i] = entries[0].FilterToken(t).TotalFiatValue()
+	}
+	order := tools.ReverseIntArray(tools.SortAndReturnIndex(lastSampleTotals))
+	tokens := make([]string, len(unsortedTokens))
+	for i, idx := range order {
+		tokens[i] = unsortedTokens[idx]
+	}
 	// Prepare the final result
-	result := make([]map[string]interface{}, 0, len(timeSeries))
-	for i, snapshot := range timeSeries {
-		snapshotTime := from.Add(time.Duration(i) * interval)
-		snapshotMap := make(map[string]interface{})
-		snapshotMap["timestamp"] = snapshotTime.Unix()
-		for _, bal := range snapshot.Entries() {
-			token := strings.ToLower(bal.Token)
-			if mode == "fiat_value" {
-				snapshotMap[token] = bal.FiatValue
-			} else {
-				// mode == "token"
-				snapshotMap[token] = bal.Balance
+	result := make([]map[string]interface{}, 0, len(entries))
+	for i := 0; i < len(entries); i++ {
+		entry := entries[i]
+		if len(entry.Entries()) > 0 {
+			snapshotTime := from.Add(time.Duration(i) * interval)
+			snapshotMap := make(map[string]interface{})
+			snapshotMap["timestamp"] = snapshotTime
+			for _, token := range tokens {
+				tokenData := entry.FilterToken(token)
+				if mode == "fiat_value" {
+					snapshotMap[token] = tokenData.TotalFiatValue()
+				} else {
+					snapshotMap[token] = tokenData.TokenBalance(token)
+				}
 			}
+			result = append(result, snapshotMap)
 		}
-		result = append(result, snapshotMap)
 	}
 	response := ApiResponse{
 		Message: "Structured balances retrieved successfully",
