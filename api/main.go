@@ -154,22 +154,64 @@ func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 	toStr := r.URL.Query().Get("to")
 	intervalStr := r.URL.Query().Get("interval")
 	mode := r.URL.Query().Get("mode")
-	// Validate the mode
-	if mode != "token" && mode != "fiat_value" {
+	// Validate parameters
+	if mode != "fiat_value" && mode != "token" {
 		http.Error(w, "Invalid 'mode' parameter. Allowed values: 'token', 'fiat_value'", http.StatusBadRequest)
 		return
 	}
-	from, _ := time.Parse(time.RFC3339, fromStr)
-	to, _ := time.Parse(time.RFC3339, toStr)
-	interval, _ := time.ParseDuration(intervalStr + "h")
-	balances, err := s.client.GetBalancesInRange(from, to, interval, mode)
+	from, err := time.Parse(time.RFC3339, fromStr)
 	if err != nil {
-		http.Error(w, "Failed to fetch balances", http.StatusInternalServerError)
+		http.Error(w, "Invalid 'from' parameter", http.StatusBadRequest)
 		return
+	}
+	to, err := time.Parse(time.RFC3339, toStr)
+	if err != nil {
+		http.Error(w, "Invalid 'to' parameter", http.StatusBadRequest)
+		return
+	}
+	intervalHours, err := strconv.Atoi(intervalStr)
+	if err != nil || intervalHours <= 0 {
+		http.Error(w, "Invalid 'interval' parameter", http.StatusBadRequest)
+		return
+	}
+	interval := time.Duration(intervalHours) * time.Hour
+	// Fetch raw balances for [from, to]
+	rawBalances, err := s.client.GetBalancesInRange(from, to)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to fetch balances: %v", err), http.StatusInternalServerError)
+		return
+	}
+	// Build a time-series via GetTimeSeries.
+	totalDuration := to.Sub(from)
+	if totalDuration < 0 {
+		http.Error(w, "'from' must be before 'to'", http.StatusBadRequest)
+		return
+	}
+	steps := int(totalDuration / interval)
+	if steps < 1 {
+		steps = 1
+	}
+	timeSeries := rawBalances.GetTimeSeries(steps, interval)
+	// Prepare the final result
+	result := make([]map[string]interface{}, 0, len(timeSeries))
+	for i, snapshot := range timeSeries {
+		snapshotTime := from.Add(time.Duration(i) * interval)
+		snapshotMap := make(map[string]interface{})
+		snapshotMap["timestamp"] = snapshotTime.Unix()
+		for _, bal := range snapshot.Entries() {
+			token := strings.ToLower(bal.Token)
+			if mode == "fiat_value" {
+				snapshotMap[token] = bal.FiatValue
+			} else {
+				// mode == "token"
+				snapshotMap[token] = bal.Balance
+			}
+		}
+		result = append(result, snapshotMap)
 	}
 	response := ApiResponse{
 		Message: "Structured balances retrieved successfully",
-		Data:    balances,
+		Data:    result,
 	}
 	s.writeJSONResponse(w, response)
 }

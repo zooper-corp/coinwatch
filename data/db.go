@@ -6,7 +6,6 @@ import (
 	"github.com/upper/db/v4/adapter/sqlite"
 	"github.com/zooper-corp/CoinWatch/tools"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -130,67 +129,33 @@ func (d *Db) GetBalances(options BalanceQueryOptions) (Balances, error) {
 	}, nil
 }
 
-func (d *Db) GetBalancesInRange(from, to time.Time, interval time.Duration, mode string) ([]map[string]interface{}, error) {
+func (d *Db) GetBalancesInRange(from, to time.Time) (Balances, error) {
 	sess, err := d.GetSession()
 	if err != nil {
-		return nil, err
+		return Balances{}, err
 	}
-	defer func(sess db.Session) {
+	defer func() {
 		_ = sess.Close()
-	}(sess)
+	}()
 	collection := sess.Collection(balanceCollection)
-	// Check if the table exists
 	exists, _ := collection.Exists()
 	if !exists {
-		return nil, nil
+		// If table doesn't exist, just return an empty Balances struct
+		return Balances{}, nil
 	}
-	// Query for balances within the time range
-	fromStr := from.Format(time.RFC3339) // ISO 8601 format
-	toStr := to.Format(time.RFC3339)     // ISO 8601 format
+	// Prepare the query
+	fromStr := from.Format(time.RFC3339)
+	toStr := to.Format(time.RFC3339)
 	var result []Balance
 	q := sess.SQL().
 		SelectFrom(balanceCollection).
 		Where(fmt.Sprintf("ts BETWEEN '%s' AND '%s'", fromStr, toStr)).
 		OrderBy("ts ASC")
-	log.Printf(q.String())
+	log.Printf("SQL: %s", q.String())
 	if err := q.All(&result); err != nil {
-		return nil, err
+		return Balances{}, err
 	}
-	// Log the results
-	log.Printf("Query returned %d results", len(result))
-	// Organize data by interval
-	var balances []map[string]interface{}
-	currentTime := from
-	// Keep track of the previous values for each token
-	previousValues := make(map[string]float64)
-	for currentTime.Before(to) {
-		point := map[string]interface{}{
-			"timestamp": currentTime.Format(time.RFC3339),
-		}
-		hasChanges := false
-		// Loop through the balances and filter by token
-		for _, entry := range result {
-			if entry.Timestamp.After(currentTime) && entry.Timestamp.Before(currentTime.Add(interval)) {
-				token := strings.ToLower(entry.Token)
-				var value float64
-				if mode == "token" {
-					value = entry.Balance // Use Balance when mode is "token"
-				} else if mode == "fiat_value" {
-					value = entry.FiatValue // Use FiatValue when mode is "fiat_value"
-				}
-				// Check if the value has changed
-				if previousValue, exists := previousValues[token]; !exists || value != previousValue {
-					point[token] = value
-					previousValues[token] = value
-					hasChanges = true
-				}
-			}
-		}
-		// Only append the point if there were changes
-		if hasChanges {
-			balances = append(balances, point)
-		}
-		currentTime = currentTime.Add(interval)
-	}
-	return balances, nil
+	log.Printf("GetBalancesInRange returned %d raw balances", len(result))
+	// Return all raw balances in a Balances container
+	return Balances{entries: result}, nil
 }
