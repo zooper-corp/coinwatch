@@ -154,8 +154,8 @@ func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 	intervalStr := r.URL.Query().Get("interval")
 	mode := r.URL.Query().Get("mode")
 	// Validate parameters
-	if mode != "fiat_value" && mode != "token" {
-		http.Error(w, "Invalid 'mode' parameter. Allowed values: 'token', 'fiat_value'", http.StatusBadRequest)
+	if mode != "fiat_value" && mode != "token" && mode != "price" {
+		http.Error(w, "Invalid 'mode' parameter. Allowed values: 'token', 'fiat_value' or 'price'", http.StatusBadRequest)
 		return
 	}
 	from, err := time.Parse(time.RFC3339, fromStr)
@@ -210,8 +210,15 @@ func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
 				tokenData := entry.FilterToken(token)
 				if mode == "fiat_value" {
 					point[token] = tokenData.TotalFiatValue()
-				} else {
+				} else if mode == "token" {
 					point[token] = tokenData.TokenBalance(token)
+				} else if //goland:noinspection GoDfaConstantCondition
+				mode == "price" {
+					if tokenData.TokenBalance(token) > 0 {
+						point[token] = tokenData.TotalFiatValue() / tokenData.TokenBalance(token)
+					} else {
+						continue
+					}
 				}
 			}
 			result = append(result, point)
