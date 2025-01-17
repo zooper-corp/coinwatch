@@ -155,10 +155,11 @@ func (s *ApiServer) handleMetrics(w http.ResponseWriter, r *http.Request) {
 	// Set headers
 	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", int(s.config.CacheTTL.Seconds())))
 	w.Header().Set("Content-Type", "text/plain")
-	tokens := balance.Tokens()
 	// Find BTC value first
 	btcValue := balance.FilterToken("BTC").TotalFiatValue()
 	btcPrice := btcValue / balance.FilterToken("BTC").TokenBalance("BTC")
+	// Write metrics
+	tokens := balance.Tokens()
 	for _, token := range tokens {
 		bd := balance.FilterToken(token)
 		amount := bd.TokenBalance(token)
