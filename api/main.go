@@ -44,11 +44,21 @@ func (s *ApiServer) Start() {
 func (s *ApiServer) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request: %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
+		// Extract API key from X-Api-Key header or Authorization header
 		apiKey := r.Header.Get("X-Api-Key")
+		if apiKey == "" {
+			// If X-Api-Key is not present, check Authorization header
+			authHeader := r.Header.Get("Authorization")
+			if strings.HasPrefix(authHeader, "apikey ") {
+				apiKey = strings.TrimPrefix(authHeader, "apikey ")
+			}
+		}
+		// Validate the API key
 		if apiKey != s.config.ApiKey {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
+		// Proceed to the next handler
 		next.ServeHTTP(w, r)
 	}
 }
