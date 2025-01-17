@@ -33,6 +33,7 @@ func (s *ApiServer) Start() {
 	http.HandleFunc("/api/v1/balance", s.corsMiddleware(s.authMiddleware(s.handleBalance)))
 	http.HandleFunc("/api/v1/history", s.corsMiddleware(s.authMiddleware(s.handleHistory)))
 	http.HandleFunc("/api/v1/query", s.corsMiddleware(s.authMiddleware(s.handleQuery)))
+	http.HandleFunc("/metrics", s.corsMiddleware(s.authMiddleware(s.handleMetrics)))
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 	log.Printf("Starting API server on %s", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
@@ -147,6 +148,36 @@ func (s *ApiServer) handleHistory(w http.ResponseWriter, r *http.Request) {
 		Data:    dataSeries,
 	}
 	s.writeJSONResponse(w, response)
+}
+
+func (s *ApiServer) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	balance := s.client.GetLastBalance()
+	// Set headers
+	w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d", int(s.config.CacheTTL.Seconds())))
+	w.Header().Set("Content-Type", "text/plain")
+	tokens := balance.Tokens()
+	// Find BTC value first
+	btcValue := balance.FilterToken("BTC").TotalFiatValue()
+	btcPrice := btcValue / balance.FilterToken("BTC").TokenBalance("BTC")
+	for _, token := range tokens {
+		bd := balance.FilterToken(token)
+		amount := bd.TokenBalance(token)
+		value := bd.TotalFiatValue()
+		price := value / amount
+		metrics := []string{
+			fmt.Sprintf("crypto_balance{token=\"%s\",type=\"balance\"} %f\n", token, amount),
+			fmt.Sprintf("crypto_balance{token=\"%s\",type=\"value\"} %f\n", token, value),
+			fmt.Sprintf("crypto_balance{token=\"%s\",type=\"price\"} %f\n", token, price),
+			fmt.Sprintf("crypto_balance{token=\"%s\",type=\"price_btc\"} %f\n", token, price/btcPrice),
+			fmt.Sprintf("crypto_balance{token=\"%s\",type=\"value_btc\"} %f\n", token, value/btcPrice),
+		}
+		for _, metric := range metrics {
+			if _, err := w.Write([]byte(metric)); err != nil {
+				log.Printf("Error writing metric for token %s: %v", token, err)
+				return
+			}
+		}
+	}
 }
 
 func (s *ApiServer) handleQuery(w http.ResponseWriter, r *http.Request) {
